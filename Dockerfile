@@ -13,8 +13,6 @@ RUN cargo build --release
 FROM  --platform=$TARGETPLATFORM ghcr.io/calm04061/rust:${BASE_VERSION}-${RUST_VERSION}-runner
 EXPOSE 50051
 WORKDIR /app
-ADD .env .
-ADD conf conf
 
 COPY --from=builder /app/target/release/github-cache /app/github-cache
 ENTRYPOINT ["./github-cache"]
