@@ -20,7 +20,8 @@ env:
   REGISTRY: ghcr.io
   # github.repository as <account>/<repo>
   IMAGE_NAME: ${{ github.repository }}
-  BASE_VERSION: 0.0.1
+  BASE_VERSION: 3.19.1
+  RUST_VERSION: 1.76.0
 jobs:
   build:
     runs-on: ubuntu-latest
