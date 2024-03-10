@@ -8,17 +8,17 @@ async fn main() {
 }
 
 async fn test0() {
-    println!("123123123")
+    println!("67567567")
 }
 
 async fn test1() {
-    println!("123123123")
+    println!("56456")
 }
 
 async fn test2() {
-    println!("123123123")
+    println!("35435345")
 }
 
 async fn test3() {
-    println!("123123123")
+    println!("4234234234")
 }
