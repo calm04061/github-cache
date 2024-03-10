@@ -2,6 +2,11 @@ ARG BASE_VERSION
 ARG RUST_VERSION
 FROM --platform=$TARGETPLATFORM ghcr.io/calm04061/rust:${BASE_VERSION}-${RUST_VERSION}-protobuf as builder
 WORKDIR /app
+ADD Cargo.* ./
+RUN mkdir src &&\
+    echo "fn main(){}" > src/main.rs && \
+    cargo build --release
+
 ADD . ./
 RUN cargo build --release
 
