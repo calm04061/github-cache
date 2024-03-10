@@ -29,11 +29,11 @@ jobs:
         target:
           - platform: linux/amd64
             suffix: amd64
-            runner: ubuntu-latest
+            os: ubuntu-latest
           - platform: linux/arm64
             suffix: aarch64
-            runner: macOS-14-arm64
-    runs-on: ${{ matrix.target.runner }}
+            os: macos-14
+    runs-on: ${{ matrix.target.os }}
     permissions:
       contents: read
       packages: write
