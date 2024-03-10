@@ -4,12 +4,21 @@ async fn main() {
     test0().await;
     test1().await;
     test2().await;
+    test3().await;
 }
-async fn test0(){
-    println!("123123123")
-}async fn test1(){
+
+async fn test0() {
     println!("123123123")
 }
-async fn test2(){
+
+async fn test1() {
+    println!("123123123")
+}
+
+async fn test2() {
+    println!("123123123")
+}
+
+async fn test3() {
     println!("123123123")
 }
