@@ -76,6 +76,7 @@ jobs:
           context: .
           build-args: |
             BASE_VERSION=${{env.BASE_VERSION}}
+            RUST_VERSION=${{env.RUST_VERSION}}
           file: Dockerfile
           platforms: ${{ matrix.target.platform }}
           push: ${{ github.event_name != 'pull_request' }}
