@@ -5,6 +5,7 @@ async fn main() {
     test1().await;
     test2().await;
     test3().await;
+    test4().await;
 }
 
 async fn test0() {
@@ -20,5 +21,9 @@ async fn test2() {
 }
 
 async fn test3() {
+    println!("4234234234")
+}
+
+async fn test4() {
     println!("4234234234")
 }
