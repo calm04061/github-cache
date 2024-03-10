@@ -120,10 +120,10 @@ jobs:
             docker manifest create -a ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest ${tag}-amd64 ${tag}-aarch64
             docker manifest push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest -p
           done
-      - uses: quartx-analytics/ghcr-cleaner@v1
-        with:
-          owner-type: user
-          token: ${{ secrets.TOKEN_DEL }}
-          repository-owner: ${{ github.repository_owner }}
-          package-name: finance
-          delete-untagged: true
+#      - uses: quartx-analytics/ghcr-cleaner@v1
+#        with:
+#          owner-type: user
+#          token: ${{ secrets.TOKEN_DEL }}
+#          repository-owner: ${{ github.repository_owner }}
+#          package-name: finance
+#          delete-untagged: true
