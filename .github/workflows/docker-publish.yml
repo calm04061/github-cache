@@ -75,7 +75,7 @@ jobs:
           context: .
           build-args: |
             BASE_VERSION=${{env.BASE_VERSION}}
-          file: support/Dockerfile
+          file: Dockerfile
           platforms: ${{ matrix.target.platform }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
