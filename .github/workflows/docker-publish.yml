@@ -6,24 +6,23 @@ name: Docker
 # documentation.
 
 on:
+  #  schedule:
+  #    - cron: '33 11 * * *'
   push:
-    branches: [ "main" ]
+    branches: [ "master","develop" ]
     # Publish semver tags as releases.
     tags: [ 'v*.*.*' ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "master" ]
 
 env:
   # Use docker.io for Docker Hub if empty
   REGISTRY: ghcr.io
   # github.repository as <account>/<repo>
   IMAGE_NAME: ${{ github.repository }}
-  BASE_VERSION: 3.19.1
-  RUST_VERSION: 1.76.0
-
+  BASE_VERSION: 0.0.1
 jobs:
   build:
-
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -31,23 +30,28 @@ jobs:
       # This is used to complete the identity challenge
       # with sigstore/fulcio when running outside of PRs.
       id-token: write
-
+    strategy:
+      matrix:
+        target:
+          - platform: linux/amd64
+            suffix: amd64
+          - platform: linux/arm64
+            suffix: aarch64
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-
-      # Set up BuildKit Docker container builder to be able to build
-      # multi-platform images and export cache
-      # https://github.com/docker/setup-buildx-action
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      # Workaround: https://github.com/docker/build-push-action/issues/461
+      - name: Setup Docker buildx
+        uses: docker/setup-buildx-action@v3
 
       # Login against a Docker registry except on PR
       # https://github.com/docker/login-action
       - name: Log into registry ${{ env.REGISTRY }}
         if: github.event_name != 'pull_request'
-        uses: docker/login-action@v3 # v3.0.0
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -57,26 +61,67 @@ jobs:
       # https://github.com/docker/metadata-action
       - name: Extract Docker metadata
         id: meta
-        uses: docker/metadata-action@v5 # v5.0.0
+        uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-
+          flavor: |
+            suffix=-${{ matrix.target.suffix }}
       # Build and push Docker image with Buildx (don't push on PR)
       # https://github.com/docker/build-push-action
       - name: Build and push Docker image
         id: build-and-push
-        uses: docker/build-push-action@v5 # v5.0.0
+        uses: docker/build-push-action@v5
         with:
+          context: .
           build-args: |
             BASE_VERSION=${{env.BASE_VERSION}}
-            RUST_VERSION=${{env.RUST_VERSION}}
-          context: .
-          platforms: linux/amd64,linux/arm64/v8
+          file: support/Dockerfile
+          platforms: ${{ matrix.target.platform }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           provenance: false
+  manifest:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      # This is used to complete the identity challenge
+      # with sigstore/fulcio when running outside of PRs.
+      id-token: write
+    steps:
+      - name: Set up Docker buildx
+        uses: docker/setup-buildx-action@v3
 
-
+      - name: Log into registry ${{ env.REGISTRY }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+      - name: Create and push manifest
+        run: |
+          tags=($(echo "${{ env.DOCKER_METADATA_OUTPUT_TAGS }}"|grep -v latest | tr '\n' ' ' | sort -u ))
+          for tag in "${tags[@]}"; do
+            docker pull ${tag}-amd64
+            docker pull ${tag}-aarch64
+            docker manifest create -a ${tag} ${tag}-amd64 ${tag}-aarch64
+            docker manifest push ${tag} -p
+            docker manifest create -a ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest ${tag}-amd64 ${tag}-aarch64
+            docker manifest push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest -p
+          done
+      - uses: quartx-analytics/ghcr-cleaner@v1
+        with:
+          owner-type: user
+          token: ${{ secrets.TOKEN_DEL }}
+          repository-owner: ${{ github.repository_owner }}
+          package-name: finance
+          delete-untagged: true
